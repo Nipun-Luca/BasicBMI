@@ -13,21 +13,52 @@ class BMIViewModel: ObservableObject {
     @Published var selectedDate: Date = Date()
     @Published var bmiRecords: [BMIRecord] = []
     
+    private let userDefaults = UserDefaults.standard
+    private let bmiRecordsKey = "BMIRecordsKey"
+    
+    init(){
+        loadStoredBMIRecords()
+    }
+    
+    func updateStoredBMIRecords() {
+        let encoder = JSONEncoder()
+        
+        if let encoded = try? encoder.encode(bmiRecords) {
+            if let jsonString = String(data: encoded, encoding: .utf8) {
+                print("JSON String representation of encoded data: \(jsonString)")
+            }
+            
+            userDefaults.set(encoded, forKey: bmiRecordsKey)
+        }
+    }
+    
+    func loadStoredBMIRecords() {
+        if let data = userDefaults.data(forKey: bmiRecordsKey) {
+            print("bmiRecords... before decoding....\(data)")
+            let decoder = JSONDecoder()
+            if let decoded = try? decoder.decode([BMIRecord].self, from: data) {
+                bmiRecords = decoded.sorted(by: { $0.date < $1.date })
+                print("decoded data ...\(decoded)")
+            }
+        }
+    }
+    
     func calculateBMI(){
         if let heightValue = Double(height), let weightValue = Double(weight), heightValue > 0, weightValue > 0{
             let BMI = weightValue / (heightValue * heightValue)
+            let record = BMIRecord(date: selectedDate, bmiValue: BMI)
             
-            var changePercentage: Double?
-            if let lastRecord = bmiRecords.last {
-                changePercentage = ( (BMI - lastRecord.bmiValue / lastRecord.bmiValue) * 100 )
+            bmiRecords.append(record)
+            bmiRecords.sort(by: { $0.date < $1.date })
+            
+            for index in 1..<bmiRecords.count {
+                let previousRecord = bmiRecords[index - 1]
+                let changePercentage = ( (bmiRecords[index].bmiValue - previousRecord.bmiValue) / previousRecord.bmiValue) * 100
+                bmiRecords[index].changePercentage = changePercentage
             }
             
-            let record = BMIRecord(date: selectedDate, bmiValue: BMI, changePercentage: changePercentage)
-            bmiRecords.append(record)
+            updateStoredBMIRecords()
         }
-        
-        height = ""
-        weight = ""
     }
         
     func classifyBMI(BMI: Double) -> String{

@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct BMIRecord: Identifiable {
+struct BMIRecord: Identifiable, Encodable, Decodable {
     var id = UUID()
     var date: Date
     var bmiValue: Double

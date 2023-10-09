@@ -9,8 +9,8 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var showAlert: Bool = false
-    
-    @ObservedObject var viewModel = BMIViewModel()
+    @StateObject var viewModel = BMIViewModel()
+    @FocusState private var fieldIsFocused: Bool
 
     var body: some View {
         
@@ -26,24 +26,42 @@ struct ContentView: View {
                     
                 
                 TextField("Enter height (m)", text: $viewModel.height)
+                    .focused($fieldIsFocused)
                     .keyboardType(.decimalPad)
                     .padding()
                     .border(Color.black)
                 TextField("Enter weight (kg)", text: $viewModel.weight)
+                    .focused($fieldIsFocused)
                     .keyboardType(.decimalPad)
                     .padding()
                     .border(Color.black)
                 
                 DatePicker("Select Date", selection: $viewModel.selectedDate, in: ...Date(), displayedComponents: .date)
             
-                Button(action: viewModel.calculateBMI, label: {
+                Button(action: {
+                    viewModel.calculateBMI()
+                    fieldIsFocused = false
+                }) {
                     Text("Calculate BMI")
-                })
+                }
                 .padding()
+
                 
                 Text("BMI Records")
                     .font(.headline)
                 
+                ScrollView {
+                    List(viewModel.bmiRecords) { record in
+                        HStack(spacing: 10) {
+                            Text("\(record.date, formatter: DateFormatter.shortDate)")
+                            
+                            Text(String(format: "%.2f", record.bmiValue))
+                            
+                            
+                        }
+                    }
+                }
+                /*
                 List(viewModel.bmiRecords) { record in
                     VStack(alignment: .leading){
                         Text(record.date, format:
@@ -61,6 +79,7 @@ struct ContentView: View {
                 .background(.gray)
                 .cornerRadius(5.0)
                 .scrollContentBackground(.hidden)
+                 */
             }
             .padding()
             
